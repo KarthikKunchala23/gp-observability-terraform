@@ -9,12 +9,16 @@ resource "aws_grafana_workspace" "main" {
 
   # Data sources that Grafana can query
   data_sources = ["PROMETHEUS", "CLOUDWATCH", "XRAY"]
+  region = local.region
 
   # Notification destinations
   notification_destinations = ["SNS"]
 
-  # Network access: Open (as of not VPC-restricted)
-  # For VPC access, add vpc_configuration block
+
+  vpc_configuration {
+    subnet_ids = []
+    security_group_ids = []
+  }
 
   # Workspace configuration
   configuration = jsonencode({
