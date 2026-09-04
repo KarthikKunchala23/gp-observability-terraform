@@ -16,7 +16,7 @@ resource "aws_iam_role" "amg" {
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
-          Service = "amg.amazonaws.com"
+          Service = "grafana.amazonaws.com"
         }
       },
     ]

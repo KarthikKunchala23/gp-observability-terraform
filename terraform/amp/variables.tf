@@ -4,8 +4,8 @@ variable "prometheus_workspace_alias" {
   default     = "gp-workspace" 
 }
 
-variable "tags" {
-  description = "Tags to be applied to the AMP Workspace"
-  type        = map(string)
-  default     = local.tags
-}
+# variable "tags" {
+#   description = "Tags to be applied to the AMP Workspace"
+#   type        = map(string)
+#   default     = local.tags
+# }
