@@ -1,0 +1,138 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+
+metadata:
+  name: adot-traces
+  namespace: default
+
+spec:
+  mode: deployment
+  replicas: 1
+
+  serviceAccount: adot-collector
+
+  nodeSelector:
+    karpenter.sh/capacity-type: spot
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 750Mi
+    requests:
+      cpu: 300m
+      memory: 512Mi
+
+  config:
+
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+
+      memory_limiter:
+        check_interval: 5s
+        limit_mib: 512
+        spike_limit_mib: 128
+
+      filter/healthcheck:
+        error_mode: ignore
+
+        traces:
+          span:
+
+            # Spring Boot Actuator health endpoints
+            - 'IsMatch(attributes["http.route"], "^/actuator/health(/.*)?$")'
+
+            # AWS Load Balancer health checks
+            - 'attributes["user_agent.original"] == "ELB-HealthChecker/2.0"'
+            - 'attributes["http.user_agent"] == "ELB-HealthChecker/2.0"'
+
+            # Kubernetes probes
+            - 'IsMatch(attributes["user_agent.original"], "^kube-probe/.*")'
+            - 'IsMatch(attributes["http.user_agent"], "^kube-probe/.*")'
+
+            # Generic health endpoints
+            - 'attributes["http.target"] == "/health"'
+            - 'attributes["url.path"] == "/health"'
+
+            # NestJS
+            - 'attributes["nestjs.callback"] == "health"'
+
+            # Express
+            - 'attributes["express.name"] == "/health" and attributes["express.type"] == "request_handler"'
+            - 'attributes["http.route"] == "/health" and attributes["express.type"] == "middleware"'
+
+      k8sattributes:
+        auth_type: serviceAccount
+        passthrough: false
+
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.deployment.name
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.node.name
+
+        pod_association:
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.ip
+
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.uid
+
+          - sources:
+              - from: connection
+
+      batch:
+        timeout: 10s
+        send_batch_size: 50
+
+    exporters:
+
+      awsxray:
+        region: ap-south-1
+
+        indexed_attributes:
+          - k8s.namespace.name
+          - k8s.deployment.name
+          - k8s.pod.name
+          - http.method
+          - http.status_code
+
+      debug:
+        verbosity: detailed
+
+    extensions:
+
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    service:
+
+      extensions:
+        - health_check
+
+      pipelines:
+
+        traces:
+          receivers:
+            - otlp
+
+          processors:
+            - memory_limiter
+            - filter/healthcheck
+            - k8sattributes
+            - batch
+
+          exporters:
+            - awsxray
+            # - debug

@@ -17,7 +17,7 @@ data "aws_iam_policy" "adot_collector_policy" {
 }
 
 resource "aws_iam_role" "adot_collector" {
-  name = "${var.eks_cluster_name}-adot-collector-role"
+  name = "${data.aws_eks_cluster.this.name}-adot-collector-role"
   assume_role_policy = data.aws_iam_policy_document.adot_collector_assume.json
 }
 

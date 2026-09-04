@@ -1,14 +1,14 @@
-variable "eks_cluster_name" {
-  description = "Name of the EKS Cluster"
-  type        = string
-  default     = data.aws_eks_cluster.this.name
-}
+# variable "eks_cluster_name" {
+#   description = "Name of the EKS Cluster"
+#   type        = string
+#   default     = data.aws_eks_cluster.this.name
+# }
 
-variable "eks_cluster_version" {
-  description = "Version of the EKS Cluster"
-  type        = string
-  default     = data.aws_eks_cluster.this.version
-}
+# variable "eks_cluster_version" {
+#   description = "Version of the EKS Cluster"
+#   type        = string
+#   default     = data.aws_eks_cluster.this.version
+# }
 
 variable "addon_version" {
   description = "Version of the EKS Addon"
@@ -16,11 +16,11 @@ variable "addon_version" {
   default     = "latest"
 }
 
-variable "tags" {
-  description = "Tags to be applied to the EKS Addon"
-  type        = map(string)
-  default     = local.tags
-}
+# variable "tags" {
+#   description = "Tags to be applied to the EKS Addon"
+#   type        = map(string)
+#   default     = local.tags
+# }
 
 variable "cpu_limit" {
   description = "CPU limit for the ADOT addon"
